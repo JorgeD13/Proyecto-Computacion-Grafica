@@ -1,54 +1,43 @@
 import bpy
 from gtts import gTTS
-import nltk
-from nltk.corpus import cmudict
 import string
 from moviepy.editor import ImageSequenceClip, AudioFileClip
 import requests
 import os
-
-#nltk.download('cmudict')
+from fonemas import Transcription
 
 phonetic_to_animation = {
-    'AA': "m_AEI",
-    'AH': "m_AEI",
-    'AW': "m_AEI",
+    'A': "m_AEI",
+    'E': "m_AEI",
+    'I': "m_AEI",
     'B': "m_BMP",
-    'D': "m_CDGKRSTXZ",
-    'EH': "m_AEI",
-    'EY': "m_AEI",
-    'G': "m_CDGKRSTXZ",
-    'IH': "m_AEI",
-    'JH': "m_JChSh",
-    'L': "m_L",
-    'N': 'm_N',
-    'OW': "m_O",
+    'M': "m_BMP",
     'P': "m_BMP",
+    'C': "m_CDGKRSTXZ",
+    'D': "m_CDGKRSTXZ",
+    'G': "m_CDGKRSTXZ",
+    'K': "m_CDGKRSTXZ",
+    'R': "m_CDGKRSTXZ",
+    'ɾ': "m_CDGKRSTXZ",
     'S': "m_CDGKRSTXZ",
     'T': "m_CDGKRSTXZ",
-    'UH': 'm_U',
-    'V': "m_FV",
-    'Y': "m_JChSh",
-    'ZH': "m_JChSh",
-    'AE': "m_AEI",
-    'AO': "m_AEI",
-    'AY': "m_AEI",
+    'X': "m_CDGKRSTXZ",
+    'Z': "m_CDGKRSTXZ",
+    'J': "m_JChSh",
     'CH': "m_JChSh",
-    'DH': "m_CDGKRSTXZ",
-    'ER': "m_AEI",
-    'F': "m_FV",
-    'HH': "m_JChSh",
-    'IY': "m_AEI",
-    'K': "m_CDGKRSTXZ",
-    'M': "m_BMP",
-    'NG': 'm_N',
-    'OY': "m_O",
-    'R': "m_CDGKRSTXZ",
+    'ʧ': "m_JChSh",
     'SH': "m_JChSh",
+    'Ʝ': "m_JChSh",
+    'L': "m_L",
+    'N': "m_N",
+    'Ɲ': "m_N",
+    'O': "m_O",
+    'U': "m_U",
+    'F': "m_FV",
+    'V': "m_FV",
     'TH': "m_Th",
-    'UW': "m_U",
-    'W': "m_QW",
-    'Z': "m_CDGKRSTXZ"
+    'Q': "m_QW",
+    'W': "m_QW"
 }
 
 def path_to_write(path, filename, extension = None):
@@ -64,21 +53,16 @@ def path_to_write(path, filename, extension = None):
         counter += 1
     return file_path
 
-def cleanse_num(string_list):
-    return [s.translate(str.maketrans('', '', '0123456789')) for s in string_list]
-
 def get_phonetics(phrase):
-    d = cmudict.dict()
-    translator = str.maketrans('', '', string.punctuation)
-    cleaned_phrase = phrase.translate(translator)
-    words = cleaned_phrase.lower().split()
-
+    words = Transcription(phrase).phonology.words
     phonetic_transcriptions = []
     for word in words:
-        if word in d:
-            phonetic_transcriptions.append(cleanse_num(d[word][0]))
-        else:
-            phonetic_transcriptions.append("No transcription available for this word.")
+        word_mod = ''.join([i for i in word if i != 'ˈ'])
+        phonetics = []
+        for c in word_mod.upper():
+            if c in phonetic_to_animation:
+                phonetics.append(c)
+        phonetic_transcriptions.append(phonetics)
     return phonetic_transcriptions
 
 def text_to_speech(text, path):
@@ -139,10 +123,9 @@ def generate_animation(text, blender_infile_path, blender_outfile_path, renderin
     frame = 0
     for word in phonetic_transcriptions:
         for phon in word:
-            if phon != "HH":
-                animations = phonetic_to_animation.get(phon, None)
-                if animations:
-                    frame = run_animations(animations, frame)
+            animations = phonetic_to_animation.get(phon, None)
+            if animations:
+                frame = run_animations(animations, frame)
         frame += 6
 
     bpy.data.scenes[0].frame_end = frame
@@ -168,7 +151,7 @@ def generate_animation(text, blender_infile_path, blender_outfile_path, renderin
 
     audio = AudioFileClip(audio_path_w)
     audio_duration = audio.duration
-    adjusted_fps = int((frame + 1) / audio_duration)
+    adjusted_fps = 24#int((frame + 1) / audio_duration)
     clip = ImageSequenceClip(image_files, fps=adjusted_fps)
     clip = clip.set_audio(audio)
     animation_path_w = path_to_write(animation_path, 'animation', 'mp4')

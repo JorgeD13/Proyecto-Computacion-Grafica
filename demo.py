@@ -10,7 +10,7 @@ from animation import generate_animation
 selected_workspace_id = "667ee8bc3a6ab5948b8a5321"
 
 work_path = "C:/UTEC/ComputacionGrafica/Proyecto/Proyecto-Computacion-Grafica/"
-blender_infile_path = f"{work_path}blend/mcqueen.blend"
+blender_infile_path = f"{work_path}blend/mcqueen_trans.blend"
 blender_outfile_path = f"{work_path}blend/mcqueen_mod.blend"
 rendering_path = f"{work_path}renders/"
 audio_path = f"{work_path}audios/"
